@@ -6,9 +6,7 @@ typedef enum Token
     NUMBER,
     FLOAT,
     PLUS,
-    MINUS,
     STAR,
-    DIVIDE,
     LP,
     RP,
     END
@@ -16,21 +14,23 @@ typedef enum Token
 
 int num = 0, str_idx = 0;
 Token token;
+bool flag;
 char str[100];
 int main(void)
 {
     int result;
     printf(">>> ");
 
-    for (int i = 0; i < 100; i++)
-    {
-        char c = getchar();
-        if (c == '\n')
-            break;
-        str[i] = c;
-    }
+    // for (int i = 0; i < 100; i++)
+    // {
+    //     char c = getchar();
+    //     if (c == '\n')
+    //         break;
+    //     str[i] = c;
+    // }
 
     get_token();
+    // getchar();
     result = expression();
 
     if (token != END)
@@ -52,30 +52,17 @@ int expression()
         result = result + term();
     }
 
-    // while (token == MINUS)
-    // {
-    //     get_token();
-    //     result = result - term();
-    // }
-
     return result;
 }
 
 int term()
 {
-
     int result;
     result = factor();
     while (token == STAR)
     {
         get_token();
         result = result * factor();
-    }
-
-    while (token == MINUS)
-    {
-        get_token();
-        result = result - term();
     }
 
     return result;
@@ -110,36 +97,31 @@ void get_token()
 {
     //t_token --> token
     //number value --> num
-    char t_token = str[str_idx];
-    str_idx += 1;
+    char t_token = getchar();
+    // str[str_idx] = getchar();
 
     if (t_token >= '0' && t_token <= '9')
     {
         token = NUMBER;
         num += t_token - '0';
-        for (int i = str_idx;; i++)
+        for (int i = str_idx + 1;; i++)
         {
-            t_token = str[i];
+            t_token = getchar();
+            // str[i] = getchar();
             if (t_token < '0' || t_token > '9')
             {
                 str_idx = i;
                 break;
             }
-            num *= 10, num += t_token - '0';
+            num *= 10, num += str[i] - '0';
         }
     }
 
     else if (t_token == '+')
         token = PLUS;
 
-    else if (t_token == '-')
-        token = MINUS;
-
     else if (t_token == '*')
         token = STAR;
-
-    else if (t_token == '/')
-        token = DIVIDE;
 
     else if (t_token == '(')
         token = LP;
@@ -147,14 +129,22 @@ void get_token()
     else if (t_token == ')')
         token = RP;
 
-    else if (t_token == '\0')
-        token = END;
-
     else if (t_token == ' ')
-        get_token();
+    {
+        // str_idx += 1;
+        t_token = get_token();
+
+        // return;
+    }
+
+    else if (t_token == '\0' || t_token == '\n')
+        token = END;
 
     else
         token = ERROR;
+
+    return t_token;
+    // str_idx += 1;
 }
 
 void error_msg(int i)

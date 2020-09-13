@@ -1,10 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// typedef union Operand {
-//     int int_value;
-//     double double_value;
-// } Operand;
+typedef enum
+{
+    false,
+    true
+} bool;
+
+typedef union Operand {
+    bool type;
+    int int_value;
+    double double_value;
+} Operand;
 
 void get_token();
 int expression();
