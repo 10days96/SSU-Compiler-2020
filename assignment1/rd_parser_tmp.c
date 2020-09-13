@@ -1,9 +1,8 @@
 #include "rd_parser_tmp.h"
 
-// Operand num;
 typedef enum Token
 {
-    null,
+    ERROR,
     NUMBER,
     FLOAT,
     PLUS,
@@ -15,22 +14,20 @@ typedef enum Token
     END
 } Token;
 
-int num;
+int num = 0, str_idx = 0;
 Token token;
-
+char str[100];
 int main(void)
 {
-    char str[100] = {
-        '\0',
-    };
     int result;
+    printf(">>> ");
 
-    char ch;
-    int i = 0;
-    while (ch = getchar() != '\n')
+    for (int i = 0; i < 100; i++)
     {
-        str[i] = ch;
-        // get_token(ch);
+        char c = getchar();
+        if (c == '\n')
+            break;
+        str[i] = c;
     }
 
     get_token();
@@ -40,7 +37,7 @@ int main(void)
         error_msg(3);
 
     else
-        printf("%d\n", result);
+        printf(">>> %d\n", result);
 
     return 0;
 }
@@ -54,6 +51,13 @@ int expression()
         get_token();
         result = result + term();
     }
+
+    // while (token == MINUS)
+    // {
+    //     get_token();
+    //     result = result - term();
+    // }
+
     return result;
 }
 
@@ -66,6 +70,12 @@ int term()
     {
         get_token();
         result = result * factor();
+    }
+
+    while (token == MINUS)
+    {
+        get_token();
+        result = result - term();
     }
 
     return result;
@@ -92,14 +102,59 @@ int factor()
     else
         error_msg(1);
 
+    num = 0;
     return result;
 }
 
 void get_token()
 {
-
     //t_token --> token
     //number value --> num
+    char t_token = str[str_idx];
+    str_idx += 1;
+
+    if (t_token >= '0' && t_token <= '9')
+    {
+        token = NUMBER;
+        num += t_token - '0';
+        for (int i = str_idx;; i++)
+        {
+            t_token = str[i];
+            if (t_token < '0' || t_token > '9')
+            {
+                str_idx = i;
+                break;
+            }
+            num *= 10, num += t_token - '0';
+        }
+    }
+
+    else if (t_token == '+')
+        token = PLUS;
+
+    else if (t_token == '-')
+        token = MINUS;
+
+    else if (t_token == '*')
+        token = STAR;
+
+    else if (t_token == '/')
+        token = DIVIDE;
+
+    else if (t_token == '(')
+        token = LP;
+
+    else if (t_token == ')')
+        token = RP;
+
+    else if (t_token == '\0')
+        token = END;
+
+    else if (t_token == ' ')
+        get_token();
+
+    else
+        token = ERROR;
 }
 
 void error_msg(int i)
@@ -113,7 +168,7 @@ void error_msg(int i)
         printf("error: ')' expected\n");
         break;
     case 3:
-        printf("error EOF expected\n");
+        printf("error: EOF expected\n");
         break;
     }
 
