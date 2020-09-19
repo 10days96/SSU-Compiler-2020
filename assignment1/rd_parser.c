@@ -1,4 +1,5 @@
-#include "rd_parser.h"
+#include <stdio.h>
+#include <stdlib.h>
 
 typedef enum Token
 {
@@ -11,23 +12,33 @@ typedef enum Token
     END
 } Token;
 
+typedef enum
+{
+    false,
+    true
+} bool;
+
+typedef struct Operand
+{
+    bool type;
+    int int_value;
+    double double_value;
+} Operand;
+
+void get_token();
+Operand expression();
+Operand term();
+Operand factor();
+void error_msg(int i);
+
 Operand num;
-int str_idx = 0;
-Token token;
+Token token, end_token;
 bool flag;
-char str[100];
+
 int main(void)
 {
     Operand result;
     printf(">>> ");
-
-    for (int i = 0; i < 100; i++)
-    {
-        char c = getchar();
-        if (c == '\n')
-            break;
-        str[i] = c;
-    }
 
     get_token();
     result = expression();
@@ -127,7 +138,6 @@ Operand term()
                 result.double_value *= tmp.double_value;
             }
         }
-        // result = result * factor();
     }
 
     return result;
@@ -160,25 +170,45 @@ Operand factor()
 
 void get_token()
 {
-    //t_token --> token
-    //number value --> num
-    char t_token = str[str_idx];
-    str_idx += 1;
+
+    if (end_token >= PLUS && end_token <= END)
+    {
+        token = end_token;
+        end_token = -1;
+        return;
+    }
+    char t_token = getchar();
 
     if (t_token >= '0' && t_token <= '9')
     {
         token = NUMBER;
-        // int value = t_token - '0';
         num.int_value += t_token - '0';
         num.type = 0;
 
-        for (int i = str_idx;; i++)
+        while (1)
         {
-            t_token = str[i];
+            t_token = getchar();
 
             if ((t_token < '0' || t_token > '9') && t_token != '.')
             {
-                str_idx = i;
+                switch (t_token)
+                {
+                case '\n':
+                    end_token = END;
+                    break;
+                case ')':
+                    end_token = RP;
+                    break;
+
+                case '+':
+                    end_token = PLUS;
+                    break;
+
+                case '*':
+                    end_token = STAR;
+                    break;
+                }
+
                 break;
             }
 
@@ -208,7 +238,7 @@ void get_token()
     else if (t_token == ')')
         token = RP;
 
-    else if (t_token == '\0')
+    else if (t_token == '\n')
         token = END;
 
     else if (t_token == ' ')
@@ -231,9 +261,6 @@ void error_msg(int i)
     case 3:
         printf("error: EOF expected\n");
         break;
-        // case 4:
-        //     printf("waring: integer and real number operation\n");
-        //     return;
     }
 
     exit(1);
