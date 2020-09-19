@@ -1,4 +1,4 @@
-#include "LR_parser.h"
+#include "LP_parser.h"
 
 #define NUMBER 256
 #define PLUS 257
@@ -47,7 +47,7 @@ int value[1000];
 int top = -1;
 int sym;
 char yytext[32];
-int yylval;
+int yyIval;
 
 int main(void)
 {
@@ -65,15 +65,13 @@ void yyparse()
     {
         i = action[stack[top]][sym - 256];
         if (i == ACC)
-        {
-            printf(">>> %d\n", value[top]);
-        }
+            printf("success! \n");
         else if (i > 0)
             shift(i);
         else if (i < 0)
             reduce(-i);
         else
-            yyerror("");
+            yyerror();
     } while (i != ACC);
 }
 
@@ -86,7 +84,7 @@ void push(int i)
 void shift(int i)
 {
     push(i);
-    value[top] = yylval;
+    // value[top] == yyIval;
     sym = yylex();
 }
 
@@ -97,6 +95,7 @@ void reduce(int i)
     old_top = top;
     push(go_to[stack[old_top]][prod_left[i]]);
 
+    /*
     switch (i)
     {
     case 1:
@@ -121,20 +120,12 @@ void reduce(int i)
         yyerror("parsing table error");
         break;
     }
+    */
 }
 
-// 과제1처럼 error를 숫자로 넘겨주기?
-void yyerror(char *str)
+void yyerror()
 {
-    if (strcmp(str, "parsing table error"))
-    {
-        printf("parsing table error\n");
-    }
-
-    else
-    {
-        printf("syntax error\n");
-    }
+    printf("syntax error\n");
     exit(1);
 }
 
@@ -150,12 +141,12 @@ int yylex()
     {
         do
         {
-            yytext[i++] = ch;
+            // yytext[i++] = ch;
             ch = getchar();
         } while (isdigit(ch));
 
         yytext[i] = 0;
-        yylval = atoi(yytext);
+        yyIval = atoi(yytext);
         return (NUMBER);
     }
 
