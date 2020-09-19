@@ -1,5 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
+#include "LP_parser.h"
 
 #define NUMBER 256
 #define PLUS 257
@@ -40,7 +39,7 @@ int go_to[12][3] = {
     {0, 0, 0},
     {0, 0, 0}};
 
-int prod_left[7] = {0, EXPRESSION, EXPRESSION, TERM, TERM, FACTOR, FACTOR}; // NUMBER?
+int prod_left[7] = {0, EXPRESSION, EXPRESSION, TERM, TERM, FACTOR, FACTOR};
 int prod_length[7] = {0, 3, 1, 3, 1, 3, 1};
 
 int stack[1000];
@@ -50,26 +49,23 @@ int sym;
 char yytext[32];
 int yyIval;
 
-void push(int);
-void reduce(int);
-void yyerror();
-void lex_error();
-
-void main()
+int main(void)
 {
     yyparse();
+    return 0;
 }
 
-int yyparse()
+void yyparse()
 {
     int i;
     stack[++top] = 0;
+    printf(">>> ");
     sym = yylex();
     do
     {
         i = action[stack[top]][sym - 256];
         if (i == ACC)
-            print("success! \n");
+            printf("success! \n");
         else if (i > 0)
             shift(i);
         else if (i < 0)
@@ -77,25 +73,6 @@ int yyparse()
         else
             yyerror();
     } while (i != ACC);
-}
-
-int yylex()
-{
-    //생략
-    int i = 0;
-    if (isdigit(ch))
-    {
-        do
-        {
-            yytext[i++] = ch;
-            ch = getchar();
-        } while (isdigit(ch));
-
-        yytext[i] = 0;
-        yyIval = atoi(yytext);
-        return (NUMBER);
-    }
-    //생략
 }
 
 void push(int i)
@@ -107,7 +84,7 @@ void push(int i)
 void shift(int i)
 {
     push(i);
-    value[top] == yyIval;
+    // value[top] == yyIval;
     sym = yylex();
 }
 
@@ -117,7 +94,8 @@ void reduce(int i)
     top -= prod_length[i];
     old_top = top;
     push(go_to[stack[old_top]][prod_left[i]]);
-    //뭔가 생략됐다는거같음
+
+    /*
     switch (i)
     {
     case 1:
@@ -142,48 +120,67 @@ void reduce(int i)
         yyerror("parsing table error");
         break;
     }
+    */
 }
 
 void yyerror()
 {
+    printf("syntax error\n");
+    exit(1);
+}
+
+int yylex()
+{
     static char ch = ' ';
     int i = 0;
-    while (ch == ' ' || ch == '\t' || ch == '\n')
+
+    while (ch == ' ' || ch == '\t')
         ch = getchar();
+
     if (isdigit(ch))
     {
         do
+        {
+            // yytext[i++] = ch;
             ch = getchar();
-        while (isdigit(ch));
+        } while (isdigit(ch));
+
+        yytext[i] = 0;
+        yyIval = atoi(yytext);
         return (NUMBER);
     }
+
     else if (ch == '+')
     {
         ch = getchar();
-        return (PLUS);
+        return PLUS;
     }
+
     else if (ch == '*')
     {
         ch = getchar();
-        return (STAR);
+        return STAR;
     }
+
     else if (ch == '(')
     {
         ch = getchar();
-        return (LPAREN);
+        return LPAREN;
     }
     else if (ch == ')')
     {
         ch = getchar();
-        return (RPAREN);
+        return RPAREN;
     }
     else if (ch == '\n')
     {
-        ch = getchar();
-        return (END);
+        return END;
     }
+
     else
         lex_error();
+
+    return -1;
 }
 
 void lex_error()
