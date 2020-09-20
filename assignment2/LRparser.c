@@ -1,4 +1,4 @@
-#include "LR_parser.h"
+#include "LRparser.h"
 
 #define NUMBER 256
 #define PLUS 257
@@ -43,11 +43,11 @@ int prod_left[7] = {0, EXPRESSION, EXPRESSION, TERM, TERM, FACTOR, FACTOR};
 int prod_length[7] = {0, 3, 1, 3, 1, 3, 1};
 
 int stack[1000];
-num value[1000];
+oper value[1000];
 int top = -1;
 int sym;
 char yytext[32];
-num yylval;
+oper yylval;
 bool warning_flag;
 int cnt;
 
@@ -62,7 +62,7 @@ void yyparse()
     int i;
     stack[++top] = 0;
 
-    printf("> ");
+    printf(">>> ");
     sym = yylex();
     do
     {
@@ -70,12 +70,12 @@ void yyparse()
         if (i == ACC)
         {
             if (warning_flag)
-                printf("waring: integer and float operate together! at: %d\n", cnt);
+                printf("waring: operation is mixed! at: %d\n", cnt);
 
             if (value[top].type) // 정수인 경우
-                printf("> %d\n", value[top].int_val);
+                printf(">>> %d\n", value[top].value.int_val);
             else
-                printf("> %lf\n", value[top].double_val);
+                printf(">>> %lf\n", value[top].value.double_val);
         }
 
         else if (i > 0)
@@ -112,22 +112,29 @@ void reduce(int i)
     case 1:
         if (value[old_top + 1].type ^ value[old_top + 3].type) // 실수 정수가 섞여있다면
         {
+            oper val;
             warning_flag = true;
-            num val;
             val.type = false;
-            val.double_val = value[old_top + 1].type ? (double)value[old_top + 1].int_val + value[old_top + 3].double_val : value[old_top + 1].double_val + (double)value[old_top + 3].int_val;
+            if (value[old_top + 1].type) // 정수라면
+            {
+                val.value.double_val = (double)value[old_top + 1].value.int_val + value[old_top + 3].value.double_val;
+            }
+            else
+            {
+                val.value.double_val = value[old_top + 1].value.double_val + (double)value[old_top + 3].value.int_val;
+            }
             value[top] = val;
         }
 
         else // 둘 다 실수이거나 정수이거나
         {
-            num val;
+            oper val;
             val.type = value[old_top + 1].type;
             if (val.type) // 정수인 경우
-                val.int_val = value[old_top + 1].int_val + value[old_top + 3].int_val;
+                val.value.int_val = value[old_top + 1].value.int_val + value[old_top + 3].value.int_val;
 
             else
-                val.double_val = value[old_top + 1].double_val + value[old_top + 3].double_val;
+                val.value.double_val = value[old_top + 1].value.double_val + value[old_top + 3].value.double_val;
 
             value[top] = val;
         }
@@ -139,22 +146,29 @@ void reduce(int i)
         // 실수 정수 인지 판단 후 곱셈
         if (value[old_top + 1].type ^ value[old_top + 3].type) // 실수 정수가 섞여있다면
         {
+            oper val;
             warning_flag = true;
-            num val;
             val.type = false;
-            val.double_val = value[old_top + 1].type ? (double)value[old_top + 1].int_val * value[old_top + 3].double_val : value[old_top + 1].double_val * (double)value[old_top + 3].int_val;
+            if (value[old_top + 1].type) // 정수라면
+            {
+                val.value.double_val = (double)value[old_top + 1].value.int_val * value[old_top + 3].value.double_val;
+            }
+            else
+            {
+                val.value.double_val = value[old_top + 1].value.double_val * (double)value[old_top + 3].value.int_val;
+            }
             value[top] = val;
         }
 
         else // 둘 다 실수이거나 정수이거나
         {
-            num val;
+            oper val;
             val.type = value[old_top + 1].type;
             if (val.type) // 정수인 경우
-                val.int_val = value[old_top + 1].int_val * value[old_top + 3].int_val;
+                val.value.int_val = value[old_top + 1].value.int_val * value[old_top + 3].value.int_val;
 
             else
-                val.double_val = value[old_top + 1].double_val * value[old_top + 3].double_val;
+                val.value.double_val = value[old_top + 1].value.double_val * value[old_top + 3].value.double_val;
 
             value[top] = val;
         }
@@ -221,32 +235,16 @@ int yylex()
 
             yytext[i] = 0;
             yylval.type = false; // 실수
-            yylval.double_val = atof(yytext);
+            yylval.value.double_val = atof(yytext);
             cnt++;
             return NUMBER;
         }
 
         yytext[i] = 0;
         yylval.type = true; // 정수
-        yylval.int_val = atoi(yytext);
+        yylval.value.int_val = atoi(yytext);
         return NUMBER;
     }
-
-    //소수점인 경우 확인
-
-    // else if (ch == '.')
-    // {
-    //     do
-    //     {
-    //         yytext[i++] = ch;
-    //         ch = getchar();
-    //     } while (isdigit(ch));
-
-    //     yytext[i] = 0;
-    //     yylval.type = false; // 실수
-    //     yylval.double_val = atof(yytext);
-    //     return NUMBER;
-    // }
 
     else if (ch == '+')
     {
